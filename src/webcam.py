@@ -63,104 +63,21 @@ def main():
     container = av.open(stream)
     rospy.loginfo('main: opened')
 
-    width = 320
-    height = 240
-
-    i = 0
-
-    face_cascade = cv2.CascadeClassifier('/home/pongsakorn/tello_face_tracking/src/face_detection/src/haarcascade_frontalface_default.xml')
-
-    ScaleFactor = 1.5
-    minNeighbors = 3
-
-    for frame in container.decode(video=0):
-        image = cv2.cvtColor(np.array(frame.to_image()), cv2.COLOR_RGB2BGR)
-
-        res = cv2.resize(image, (320,240))
-        gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)        
-        faces = face_cascade.detectMultiScale(gray, ScaleFactor, minNeighbors)
-
-        if (i > 900 and i <= 901):
-            takeoff()
-
-        if len(faces) == 0:
-            print ("No face detected")
-            cmd_vel.linear.x = 0.0
-            cmd_vel.angular.z = 0.0
 
 
-        else:
-            for (x,y,w,h) in faces:
-                
-                cv2.rectangle(res,(x,y),(x+w,y+h),(255,0,0),2)  
-                roi = res[y:y+h, x:x+w]
+    cv2.imshow('Frame', res)
+    cv2.waitKey(1)
 
-                center_x = (x+(w/2))
-                center_y = (y+(h/2))
-                
-                # left_side
-                if center_x > 0 and center_x <= width/3:
-                    print("left_side")
-                    cmd_vel.angular.z = -0.4
-
-                # middle_side
-                elif center_x > width/3 and center_x <= 2*(width/3):
-                    print("middle_side")
-                    cmd_vel.angular.z = 0.0
-
-                # right_side
-                elif center_x > 2*(width/3) and center_x <= width:
-                    print("right_side")
-                    cmd_vel.angular.z = 0.4
-
-
-                # move_forward
-                if w > 0 and w <= width/6:
-                    print("move_forward")
-                    cmd_vel.linear.y = 0.3
-                
-                elif w> width/6 and w <= width/4:
-                    print("no move")
-                    cmd_vel.linear.y = 0
-
-                # move backward 
-                else:
-                    print("move_backward")
-                    cmd_vel.linear.y = -0.3
-                                
-                
-                rospy.loginfo("center x: " + str(x+(w/2)))
-                rospy.loginfo("center y: " + str(y+(h/2)))
-                rospy.loginfo("frame_w: " + str(w))
-
-        pub_vel.publish(cmd_vel)
-
-        i = i+1
-        print("iteration: " + str(i))
-
-        cv2.imshow('Frame', res)
-        cv2.waitKey(1)
-
-
-
-def takeoff():
-    print("taking off")
-    pub_takeoff.publish(takeoff_msg) 
-    rospy.sleep(1)
-    
-    cmd_vel.linear.z = 0.75
-    pub_vel.publish(cmd_vel)
-
-    rospy.sleep(3)
-
-    cmd_vel.linear.z = 0
-    pub_vel.publish(cmd_vel)   
 
 
 
 if __name__ == '__main__':
     
     rospy.init_node('h264_listener')
+
+
+# TODO USE TWIST JOGGER FOR CONTROLLING DRONE MANUALLY 
+
 
     pub_takeoff = rospy.Publisher('/tello/takeoff',Empty,queue_size=1)
 
